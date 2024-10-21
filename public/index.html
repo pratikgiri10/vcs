@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in</title>
+</head>
+<style>
+    form{
+        display: flex;
+        flex-direction: column;
+        width: 200px;
+        margin: 0 auto;
+        /* justify-content: center; */
+        /* align-items: center; */
+    }
+    
+</style>
+<body>
+    <form id="form">
+        
+        <label for="id">Room Id</label>
+        <input type="text" id="roomId" name="id"> 
+        <button type="submit">Enter</button>
+    </form>
+    <script>
+        document.getElementById('form').addEventListener('submit',async (e) => {
+            e.preventDefault();
+            const roomId = document.getElementById('roomId').value;
+
+            if (roomId) {
+                // Step 1: Validate the Room ID via an HTTP request
+                fetch('http://localhost:3000/validate-room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ roomId: roomId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                if (data.valid) {
+                    // Step 2: If the room ID is valid, redirect to meetingRoom.html
+                    window.location.href = `./components/meetingRoom.html?roomId=${roomId}`;
+                } else {
+                    // Step 3: If the room ID is invalid, show an error message
+                    alert('Invalid Room ID. Please try again.')
+                    
+                }
+                })
+                .catch((error) => {
+                console.error('Error:', error);
+                alert('Error occurred while validating the Room ID.');
+                });
+            }
+           
+            // if(roomId)
+            // {
+            //     console.log('id valid')
+            //     window.location.href = `./components/meetingRoom.html?roomID=${roomId}`;
+            // }
+            // else if(!roomId)
+            // {
+            //     alert('please enter room id');
+            // }
+            
+        })
+    </script>
+    
+</body>
+</html>
