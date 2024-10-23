@@ -11,12 +11,13 @@ const join = document.getElementById('join');
 
 // import { roomId } from './modules/validate';
 
-
+let rtpCapabilities;
 let device;
 let sendTransport;
 let recvTransport;
 let producer;
 let consumer;
+let isProducer = false;
 
 start.addEventListener('click',async () => {
     // await initializeSocket();
@@ -31,11 +32,11 @@ start.addEventListener('click',async () => {
 join.addEventListener('click',async () => {
     // await initializeSocket();
     console.log('join button')
-    await initializeDevice();
-    setTimeout(function(){
-        createRecvTransport();
+    // await initializeDevice();
+    // setTimeout(function(){
+    //     createRecvTransport();
 
-    },800)
+    // },800)
 })
 function getQueryString(){
     const urlParams = new URLSearchParams(window.location.search);
@@ -44,35 +45,68 @@ function getQueryString(){
     return roomId;
 }
 const roomId = getQueryString();
+function streamSuccess(stream){
+    localVideo.srcObject = stream;
+}
+async function mediaStream(){
+   
+   navigator.mediaDevices.getUserMedia({ audio: false, video: true})
+   .then(stream => {
+    streamSuccess(stream);
+   })
+   .catch((err) => {
+    console.log(err);
+   })
+   
+    
+}
 socket.on('connect', () => {
     console.log(`A client connected: ${socket.id}`);
-    socket.emit('room',roomId,(callback) => {
+
+    socket.emit('room',roomId,(data) => {
       
             console.log("new client joined the room")
+            mediaStream();
+            rtpCapabilities = data.rtpCapabilities;
       
     });
 })
 
 async function initializeDevice(){
     console.log("Initializing device");
-    socket.emit('getRtpCapabilities',{},async (rtpCapabilities) => {
-        console.log('getting rtpCapabilities: ',rtpCapabilities)
-        const routerRtpCapabilities = rtpCapabilities;
-        device = new mediasoupClient.Device();
-        await device.load({routerRtpCapabilities});
-        console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
+    device = new mediasoupClient.Device();
+    const routerRtpCapabilities = rtpCapabilities;
+    await device.load({routerRtpCapabilities});
+    console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
+    // socket.emit('getRtpCapabilities',{},async (rtpCapabilities) => {
+    //     console.log('getting rtpCapabilities: ',rtpCapabilities)
+    //     const routerRtpCapabilities = rtpCapabilities;
+    //     device = new mediasoupClient.Device();
+    //     await device.load({routerRtpCapabilities});
+    //     console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
 
+    // })
+}
+async function getProducers(){
+    console.log('producer exists');
+    socket.emit('getProducers',{},({producerIds}) => {
+        console.log("Producer ids: ",producerIds);
+        producerIds.forEach(element => {
+            console.log("you are both producer and consumer")
+            newConsumer(element);
+        });
     })
 }
 async function createSendTransport(){
     if(!device)
         console.log("Device not initialized");
-    socket.emit('createSendTransport',device.rtpCapabilities,async (params) => {
+    socket.emit('createTransport',{rtpCapabilities: device.rtpCapabilities,consumer: false},async (params) => {
         console.log("Params from send tranport: ",params);
         try{
             sendTransport = await device.createSendTransport(params);
             
             sendTransport.on('connect',async ({dtlsParameters},callback,errback) => {
+                console.log("dtlsparameters: ",dtlsParameters);
                 try{
                     console.log("producer connect event")
                     socket.emit('producer-connect',{
@@ -92,8 +126,12 @@ async function createSendTransport(){
                         id: sendTransport.id,
                         kind: parameters.kind,
                         rtpParameters: parameters.rtpParameters
+                    },({id,producerExists}) => {
+                        callback({id});
+
+                        if(producerExists) getProducers();
                     }) 
-                    callback({id});
+                    
                 } catch(err){
                     errback(err);
                 }
@@ -115,7 +153,7 @@ async function createSendTransport(){
 async function produceMedia(){
     console.log("producing media")
     const stream = await navigator.mediaDevices.getUserMedia({video: true});
-    localVideo.srcObject = stream;
+    // localVideo.srcObject = stream;
     const track = stream.getVideoTracks()[0];
     console.log(track)
     try{
@@ -130,12 +168,12 @@ async function produceMedia(){
     
 }
 
-async function createRecvTransport(){
+async function newConsumer(remoteProducerId){
     if(!device)
         console.log("Device not initialized");
    
         
-            socket.emit('createRecvTransport',device.rtpCapabilities,async (params) => {
+            socket.emit('createTransport',{rtpCapabilities: device.rtpCapabilities,consumer: true},async (params) => {
         
                 try{
                 
@@ -145,7 +183,8 @@ async function createRecvTransport(){
                         try{
                             console.log('consumer connect');
                             socket.emit('consumer-connect',{                        
-                                dtlsParameters
+                                dtlsParameters,
+                                consumerTransportId: params.id
                             })
                             callback();
                         } catch(err){
@@ -159,7 +198,7 @@ async function createRecvTransport(){
                     })
                     console.log("calling consume")                  
                         
-                            await consume();              
+                            await consume(remoteProducerId,params.id,recvTransport);              
                   
                     
                 } catch(err){
@@ -171,9 +210,9 @@ async function createRecvTransport(){
    
     
 }
-async function consume(){
+async function consume(remoteProducerId,consumerId,recvTransport){
     console.log("consume...");
-        socket.emit('consume',{rtpCapabilities: device.rtpCapabilities},async (params) => {
+        socket.emit('consume',{rtpCapabilities: device.rtpCapabilities,remoteProducerId,consumerId},async (params) => {
             try{
                 console.log("before consuming")
                 consumer = await recvTransport.consume({
@@ -191,7 +230,7 @@ async function consume(){
                 // remoteVideo.muted = true;
                 // remoteVideo.play().catch(error => console.error("Error playing video:", error));
                 // console.log(remoteVideo.srcObject);
-                socket.emit('resume');
+                socket.emit('resume',consumerId);
             } catch(err){
                 console.log("error consuming: ",err);
             }
