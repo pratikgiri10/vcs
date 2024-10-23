@@ -127,6 +127,7 @@ async function createSendTransport(){
                         kind: parameters.kind,
                         rtpParameters: parameters.rtpParameters
                     },({id,producerExists}) => {
+                        console.log("producer exists: ",producerExists);
                         callback({id});
 
                         if(producerExists) getProducers();
@@ -197,7 +198,7 @@ async function newConsumer(remoteProducerId){
                         console.log("Consumer ConnectionStateChange: ",state);
                     })
                     console.log("calling consume")                  
-                        
+                            console.log("remote producer id: ",remoteProducerId)
                             await consume(remoteProducerId,params.id,recvTransport);              
                   
                     
@@ -210,11 +211,16 @@ async function newConsumer(remoteProducerId){
    
     
 }
+socket.on('newProducer',({producerId}) => {
+    console.log("inform about new producer");
+    newConsumer(producerId);
+})
 async function consume(remoteProducerId,consumerId,recvTransport){
     console.log("consume...");
         socket.emit('consume',{rtpCapabilities: device.rtpCapabilities,remoteProducerId,consumerId},async (params) => {
             try{
                 console.log("before consuming")
+                console.log('producerId: ',params.producerId);
                 consumer = await recvTransport.consume({
                     id: params.id,
                     producerId: params.producerId,

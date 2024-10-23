@@ -199,12 +199,12 @@ io.on('connection',async (socket) => {
     socket.on('getProducers',(_,callback) => {
         const roomId = peers[socket.id].roomId;
         let producerList = [];
-        producers.forEach(producer => {
-            if(producer.socketId != socket.id && producer.roomId == roomId)
+        producers.forEach(producerData => {
+            if(producerData.socketId != socket.id && producerData.roomId == roomId)
             {
                 producerList = [
                     ...producerList,
-                    producer.producer.id
+                    producerData.producer.id
                 ]
             }
         })
@@ -224,6 +224,19 @@ io.on('connection',async (socket) => {
         }
         // console.log(`producer-connect event: ${producerTransport.dtlsParameters}`);
     })
+    function informConsumers(producerId,socketId, roomId){
+        let producerLists = [];
+        // producerLists = producers.find(producerData => (producerData.socketId != socketId && producerData.roomId == roomId)).producer;
+        console.log("inform about new producer");
+        // socket.emit('newProducer',producerLists.id);
+        producers.forEach(producerData => {
+            if (producerData.socketId !== socketId && producerData.roomId === roomId) {
+            //   const producerSocket = peers[producerData.socketId].socket
+              // use socket to send producer id to producer
+              socket.emit('newProducer', { producerId: producerId })
+            }
+          })
+    }
     socket.on('produce',async({kind, rtpParameters},callback) => {
         // const producerTransport = peers[socket.id].transports;
         const [producerTransport] = transports.filter(transport => transport.socketId === socket.id && !transport.consumer)
@@ -250,7 +263,8 @@ io.on('connection',async (socket) => {
             })
 
             // inform about new producer
-            
+            informConsumers(producer.id,socket.id,roomId);
+            // socket.emit('newProducer',{producerId: producer.id,socketId: socket.id});
 
         } catch(err){
             console.log('error producing: ',err);
@@ -287,8 +301,10 @@ io.on('connection',async (socket) => {
         }
     })
     socket.on('consume',async({rtpCapabilities,remoteProducerId,consumerId},callback) => {
+        const roomId = peers[socket.id].roomId;
         const [consumerTransport] = transports.filter(transport => transport.socketId === socket.id && transport.consumer)
         console.log('consumerTransport: ',consumerTransport);
+        console.log("remote producer id: ",remoteProducerId)
         try{
             consumer = await consumerTransport.transport.consume({
                 rtpCapabilities,
@@ -307,9 +323,11 @@ io.on('connection',async (socket) => {
                 ...consumers,
                 {consumer,socketId: socket.id,roomId}
             ]
+            console.log("consumers: ",consumers)
+            console.log('producerId: ',remoteProducerId);
             callback({
                 id: consumer.id,
-                producerId: remoteProducerId.id,
+                producerId: remoteProducerId,
                 kind: consumer.kind,
                 rtpParameters: consumer.rtpParameters
             });
@@ -317,7 +335,7 @@ io.on('connection',async (socket) => {
             console.log("error consuming: ",err);
         }
         socket.on('resume',async ({consumerId}) => {
-            const { consumer } = consumers.find(consumerData => consumerData.consumer.id === consumerId)
+            const { consumer } = consumers.find(consumerData => consumerData.consumerId === consumerId)
             await consumer.resume();
             console.log("consumer resumed");
         })
