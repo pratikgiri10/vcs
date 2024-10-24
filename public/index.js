@@ -7,10 +7,6 @@ const remoteVideo = document.getElementById('remoteVideo');
 const start = document.getElementById('start');
 const join = document.getElementById('join');
 
-
-
-// import { roomId } from './modules/validate';
-
 let rtpCapabilities;
 let device;
 let sendTransport;
@@ -38,16 +34,20 @@ join.addEventListener('click',async () => {
 
     // },800)
 })
+
 function getQueryString(){
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('roomId');
     console.log('roomid: ',roomId);
+   
     return roomId;
 }
 const roomId = getQueryString();
+
 function streamSuccess(stream){
     localVideo.srcObject = stream;
 }
+
 async function mediaStream(){
    
    navigator.mediaDevices.getUserMedia({ audio: false, video: true})
@@ -87,19 +87,23 @@ async function initializeDevice(){
 
     // })
 }
+
+//get all the producers that are already in the room
 async function getProducers(){
     console.log('producer exists');
-    socket.emit('getProducers',{},({producerIds}) => {
-        console.log("Producer ids: ",producerIds);
-        producerIds.forEach(element => {
+    socket.emit('getProducers',{},({producerList}) => {
+        console.log("Producer ids: ",producerList);
+        producerList.forEach(element => {
             console.log("you are both producer and consumer")
             newConsumer(element);
         });
     })
 }
+
 async function createSendTransport(){
     if(!device)
         console.log("Device not initialized");
+
     socket.emit('createTransport',{rtpCapabilities: device.rtpCapabilities,consumer: false},async (params) => {
         console.log("Params from send tranport: ",params);
         try{
@@ -119,6 +123,7 @@ async function createSendTransport(){
                     errback(err);
                 }
             })
+
             sendTransport.on('produce',async (parameters,callback,errback) => {
                 try{
                     console.log('produce event')
@@ -137,20 +142,25 @@ async function createSendTransport(){
                     errback(err);
                 }
             })
+
             sendTransport.on('icestatechange',(state) => {
                 console.log("IceStateChange: ",state);
             })
+
             sendTransport.on('connectionstatechange',(state) => {
                 console.log("ConnectionStateChange: ",state);
             })
+
             await produceMedia();
+
         } catch(err){
             console.log("Error creating sendTransport: ",err);
         }
         
     })
-    
+   
 }
+
 async function produceMedia(){
     console.log("producing media")
     const stream = await navigator.mediaDevices.getUserMedia({video: true});
@@ -164,8 +174,7 @@ async function produceMedia(){
         
     } catch(err){
         console.log("error in producing media: ",err);
-    }
-    
+    }  
     
 }
 
@@ -176,14 +185,15 @@ async function newConsumer(remoteProducerId){
         
             socket.emit('createTransport',{rtpCapabilities: device.rtpCapabilities,consumer: true},async (params) => {
         
-                try{
-                
+                try{                
                     recvTransport = await device.createRecvTransport(params);
                     console.log("recv transport created: ",params);
+
                     recvTransport.on('connect',async ({dtlsParameters},callback,errback) => {
                         try{
                             console.log('consumer connect');
-                            socket.emit('consumer-connect',{                        
+                            socket.emit('consumer-connect',{    
+
                                 dtlsParameters,
                                 consumerTransportId: params.id
                             })
@@ -197,36 +207,39 @@ async function newConsumer(remoteProducerId){
                     recvTransport.on('connectionstatechange',(state) => {
                         console.log("Consumer ConnectionStateChange: ",state);
                     })
-                    console.log("calling consume")                  
-                            console.log("remote producer id: ",remoteProducerId)
-                            await consume(remoteProducerId,params.id,recvTransport);              
+
+                    console.log("calling consume");                  
+                    console.log("remote producer id: ",remoteProducerId);
+
+                    await consume(remoteProducerId,params.id,recvTransport);              
                   
                     
                 } catch(err){
                     console.log("error in recv transport: ",err);
                 }
-            })
-     
-
-   
+            })  
     
 }
+
 socket.on('newProducer',({producerId}) => {
-    console.log("inform about new producer");
+    console.log("inform about new producer: ",producerId);
     newConsumer(producerId);
 })
-async function consume(remoteProducerId,consumerId,recvTransport){
+
+async function consume(remoteProducerId,consumerTransportId,recvTransport){
     console.log("consume...");
-        socket.emit('consume',{rtpCapabilities: device.rtpCapabilities,remoteProducerId,consumerId},async (params) => {
+        socket.emit('consume',{rtpCapabilities: device.rtpCapabilities,remoteProducerId,consumerTransportId},async (params) => {
             try{
                 console.log("before consuming")
                 console.log('producerId: ',params.producerId);
+
                 consumer = await recvTransport.consume({
                     id: params.id,
                     producerId: params.producerId,
                     kind: params.kind,
                     rtpParameters: params.rtpParameters
                 });
+
                 console.log('track')
                 // Render the remote video track into a HTML video element.
                 const { track } = consumer;
@@ -236,11 +249,10 @@ async function consume(remoteProducerId,consumerId,recvTransport){
                 // remoteVideo.muted = true;
                 // remoteVideo.play().catch(error => console.error("Error playing video:", error));
                 // console.log(remoteVideo.srcObject);
-                socket.emit('resume',consumerId);
+                socket.emit('resume',params.id);
             } catch(err){
                 console.log("error consuming: ",err);
             }
-        })
-        
+        })        
     
 }
