@@ -63,7 +63,7 @@ const mediaCodecs = [
 async function createWorker(){
     worker = await mediaSoup.createWorker({
         rtcMinPort: 10000,
-        rtcMaxPort: 10010
+        rtcMaxPort: 10020
     });
     console.log(`WorkerPid: ${worker.pid}`);
 
@@ -81,7 +81,7 @@ async function createWebRtcTransport(router){
                 [
                   {
                     ip               : "0.0.0.0", 
-                    announcedIp      : "192.168.1.36"
+                    announcedIp      : "127.0.0.1"
                     
                   }
                 ],
@@ -245,7 +245,9 @@ io.on('connection',async (socket) => {
             if (producerData.socketId !== socketId && producerData.roomId === roomId) {
             //   const producerSocket = peers[producerData.socketId].socket
               // use socket to send producer id to producer
-              socket.emit('newProducer', { producerId: producerId })
+              const producerSocket = peers[producerData.socketId].socket
+              console.log("producerSocket: ",producerSocket.id);
+              producerSocket.emit('newProducer', { producerId: producerId })
             }
           })
     }
@@ -331,7 +333,7 @@ io.on('connection',async (socket) => {
                 producerId: remoteProducerId,
                 paused: true
             });
-            console.log("consumed");
+            console.log("consumed: ",remoteProducerId);
 
             // adding consumer to peers
             peers[socket.id] = {
@@ -348,8 +350,8 @@ io.on('connection',async (socket) => {
                 {consumer,socketId: socket.id,roomId}
             ]
             console.log("consumers: ",consumers);
-            // console.log("consumers id: ",consumers.consumer.id);
-            console.log('producerId: ',remoteProducerId);
+            console.log("consumers id: ",consumer.id);
+            // console.log('remoteproducerId: ',remoteProducerId);
 
             callback({
                 id: consumer.id,
