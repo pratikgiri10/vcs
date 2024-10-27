@@ -12,6 +12,7 @@
 }
 .video{
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.85rem;
     border: 1px solid #000;
@@ -19,8 +20,10 @@
     height: 500px;
 }
 video{
-    width: 200px;
-    height: 200px;
+    min-width: 200px;
+    max-width: 750px;
+    min-height: 200px;
+    max-height: 450px;
     background-color: #000;
     
 }

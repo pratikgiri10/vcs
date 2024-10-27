@@ -1,0 +1,35 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html,body{
+    width: 100%;
+    height: 100%;
+}
+.main{
+    position: relative;
+    margin: 0 auto;
+    padding: 1rem;
+    width: 500px;
+    height: 100%;
+    border: 1px solid #000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.inputBox{
+    display: flex;
+    /* justify-content: center; */
+    /* align-items: end; */
+}
+.msgBox{
+    position: absolute;
+    right: 10px;
+    bottom: 50px;
+}
+.msgBox p{
+    border: 1px solid #000;
+    border-radius: 4px;
+    padding: 0.2rem 0.7rem;
+}
