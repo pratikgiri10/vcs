@@ -2,7 +2,6 @@
   "name": "src",
   "version": "1.0.0",
   "main": "index.js",
-
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,8 +10,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "socket.io-client": "^4.8.1",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "clean-webpack-plugin": "^4.0.0"
   }
 }

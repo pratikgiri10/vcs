@@ -1,4 +1,4 @@
-// import { createConnection } from '../dist/bundle.js';
+
 const join = document.getElementById('join');
 
 join.addEventListener('click', (e) => {
@@ -14,20 +14,11 @@ join.addEventListener('click', (e) => {
     }
        
     else{
-        // createConnection(roomId,username);    
+         
         window.location.href = `./chatRoom.html?roomId=${id}&userName=${userName}`;  
-        // setInterval(() => {
-        //     redirect();
-        // },1000)  
-        
       
-            // window.location.assign('/chatRoom.html');
     }
     
      
    
 })
-// export {
-//     roomId,
-//     username
-// }

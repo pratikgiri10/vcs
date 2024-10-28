@@ -2,7 +2,7 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import cors from 'cors';
-import { joinChatRoom } from './services/chatService.js';
+import { joinChatRoom, message } from './services/chatservice.js';
 
 const app = express();
 const http = createServer(app);
@@ -16,26 +16,28 @@ app.use(cors());
 app.use(express.json());
 
 io.on('connection',(socket) => {
+    const userId = socket.id;
     console.log('A client connected: ',socket.id);
+    socket.emit('connection-succes',userId);
     socket.on('disconnect',() => {
         console.log("A client disconected: ",socket.id);
-        socket.emit('connectio-success',socket.id);
+        
 
     })
-    socket.on('joinChatRoom',(data,callback) => {
+    socket.on('joinChatRoom',(data) => {
         console.log("roomId: ",data.roomId)
         console.log("name: ",data.name)
         joinChatRoom(data.roomId,socket);
-        callback({
-            id: socket.id
-        });
     })
-    socket.on('sendMessage',() => {
-
+    socket.on('sendMessage',(msg) => {
+        console.log('message sent')
+        message(socket,msg);
+        io.emit('recvMessage',{msg,userId});
     })
-    socket.on('recvMessage',() => {
+    
+    // socket.on('recvMessage',() => {
         
-    })
+    // })
 })
 
 app.get('/', (req,res) => {

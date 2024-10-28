@@ -1,17 +1,29 @@
-const { type } = require('os');
+// const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const path = require('path');
 
 module.exports = {
-  entry: './services/socketConnection.js',
-  mode: 'production',
+    mode: 'development',
+    entry: './services/chatService.js',
+    cache: false,
     experiments: {
         outputModule: true
+      },
+    output: {
+        path: path.resolve(__dirname, 'dist'), 
+        filename: 'bundle.js',
+        library: {
+            type: 'module',
+        },
     },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
-    library: {
-      type: 'module'
-    }
-  },
+    
+    
+    // plugins: [
+    //     new CleanWebpackPlugin(), // Clears `dist` on each build
+    // ],
+    // Additional configurations as needed
 };
+
+
+// experiments: {
+//   outputModule: true
+// },

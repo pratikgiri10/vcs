@@ -4,8 +4,8 @@ function joinChatRoom(roomId, socket){
     socket.join(roomId);
     console.log('a client joined the room: ',roomId);
 }
-function sendMessage(){
-
+function message(socket){
+    
 }
 function receiveMessage(){
 
@@ -14,4 +14,4 @@ function fetchHistory(){
 
 }
 
-export { joinChatRoom, sendMessage, receiveMessage, fetchHistory };
+export { joinChatRoom, message, receiveMessage, fetchHistory };

@@ -23,12 +23,21 @@ html,body{
     /* justify-content: center; */
     /* align-items: end; */
 }
-.msgBox{
-    position: absolute;
+.msgBoxRight{
+    
+    position: absolute; 
     right: 10px;
     bottom: 50px;
+   
 }
-.msgBox p{
+.msgBoxLeft{
+    
+    position: absolute; 
+    left: 10px;
+    bottom: 50px;
+}
+.msgContainer p{
+    margin: 0.5rem 0;
     border: 1px solid #000;
     border-radius: 4px;
     padding: 0.2rem 0.7rem;

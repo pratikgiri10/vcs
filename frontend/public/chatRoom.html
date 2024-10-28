@@ -8,15 +8,17 @@
 </head>
 <body>
     <div class="main">
+        <div class="msgContainer">
+            <!-- <div class="msgBoxRight">
+                <p>hello</p>
+            </div> -->
+        </div>
         <div class="inputBox">
             <input type="text" name="msg" id="msg">
             <button id="send">Send</button>
         </div>
-        <div class="msgBox">
-            <p>hello</p>
-            <h2>hi</h2>
-        </div>
     </div>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script src="../src/components/chatRoom.js" type="module"></script>
 </body>
 </html>
