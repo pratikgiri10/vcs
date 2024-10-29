@@ -1,4 +1,4 @@
-import io from '../server.js';
+
 function joinChatRoom(roomId, socket){
     // the socket of specific client that is passed is used
     socket.join(roomId);

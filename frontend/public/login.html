@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<style>
+    form{
+        margin: 0 auto;
+        width: 250px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+</style>
+<body>
+    <form action="http://localhost:3000/api/users/login" method="POST">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username">
+        <label for="psw">Password</label>
+        <input type="password" name="psw" id="psw">
+        <button type="submit" id="signin">Sign in</button>
+    </form>
+</body>
+
+</html>

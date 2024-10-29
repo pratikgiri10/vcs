@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration form</title>
+</head>
+<style>
+    form{
+        margin: 0 auto;
+        width: 250px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+</style>
+<body>
+    <form class="formSubmit">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username">
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email">
+        <label for="psw">Password</label>
+        <input type="password" name="psw" id="psw">
+        <button type="submit" id="signup">Sign up</button>
+    </form>
+    <script src="../src/components/validation.js"></script>
+</body>
+</html>
