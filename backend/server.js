@@ -21,15 +21,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 app.use('/api/users',userRoutes);
-// connectDB()
-// .then(() => {    
-//     http.listen(3000,() => {
-//         console.log('Server is listening at port 3000 ...');
-//     })
-// })
-// .catch((err) => {
-//     console.log('Error loading server: ',err);
-// })
+connectDB()
+.then(() => {    
+    http.listen(3000,() => {
+        console.log('Server is listening at port 3000 ...');
+    })
+})
+.catch((err) => {
+    console.log('Error loading server: ',err);
+})
 
 
 // ( async () => {
@@ -75,6 +75,6 @@ io.on('connection',(socket) => {
 app.get('/', (req,res) => {
     res.send('hello');
  })
- http.listen(3000,() => {
-            console.log('Server is listening at port 3000 ...');
-        })
+//  http.listen(3000,() => {
+//             console.log('Server is listening at port 3000 ...');
+//         })
