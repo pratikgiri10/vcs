@@ -2,18 +2,21 @@
 const path = require('path');
 
 module.exports = {
-    mode: 'development',
-    entry: './services/chatService.js',
+    mode: 'production',
+    entry: './services/mediaSoupService.js',
     cache: false,
-    experiments: {
-        outputModule: true
-      },
+    // experiments: {
+    //     outputModule: true
+    //   },
     output: {
         path: path.resolve(__dirname, 'dist'), 
-        filename: 'bundle.js',
-        library: {
-            type: 'module',
-        },
+        filename: 'bundle.js',        
+        // library: {
+        //     type: 'module',
+        // },
+        library: 'library',    // very important line
+        libraryTarget: 'umd',    // very important line
+        umdNamedDefine: true    
     },
     
     

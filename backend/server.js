@@ -6,6 +6,8 @@ import cors from 'cors';
 import { joinChatRoom, message } from './services/chatservice.js';
 import connectDB from './config/mongooseConfig.js';
 import userRoutes from './routes/userRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
+import { initialize } from './services/transportService.js';
 
 dotenv.config({
     path: './env'
@@ -21,15 +23,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
 app.use('/api/users',userRoutes);
-connectDB()
-.then(() => {    
-    http.listen(3000,() => {
-        console.log('Server is listening at port 3000 ...');
-    })
-})
-.catch((err) => {
-    console.log('Error loading server: ',err);
-})
+app.use('/api/rooms', roomRoutes);
+
+initialize(io);
+// connectDB()
+// .then(() => {    
+//     http.listen(3000,() => {
+//         console.log('Server is listening at port 3000 ...');
+//     })
+// })
+// .catch((err) => {
+//     console.log('Error loading server: ',err);
+// })
 
 
 // ( async () => {
@@ -47,34 +52,35 @@ connectDB()
 
 
 
-io.on('connection',(socket) => {
-    const userId = socket.id;
-    console.log('A client connected: ',socket.id);
-    socket.emit('connection-succes',userId);
-    socket.on('disconnect',() => {
-        console.log("A client disconected: ",socket.id);
+//  io.on('connection',(socket) => {
+//     const userId = socket.id;
+//     console.log('A client connected: ',socket.id);
+//     socket.emit('connection-succes',userId);
+//     socket.on('disconnect',() => {
+//         console.log("A client disconected: ",socket.id);
         
 
-    })
-    socket.on('joinChatRoom',(data) => {
-        console.log("roomId: ",data.roomId)
-        console.log("name: ",data.name)
-        joinChatRoom(data.roomId,socket);
-    })
-    socket.on('sendMessage',(msg) => {
-        console.log('message sent')
-        message(socket,msg);
-        io.emit('recvMessage',{msg,userId});
-    })
+//     })
     
-    // socket.on('recvMessage',() => {
+//     // socket.on('joinChatRoom',(data) => {
+//     //     console.log("roomId: ",data.roomId)
+//     //     console.log("name: ",data.name)
+//     //     joinChatRoom(data.roomId,socket);
+//     // })
+//     // socket.on('sendMessage',(msg) => {
+//     //     console.log('message sent')
+//     //     message(socket,msg);
+//     //     io.emit('recvMessage',{msg,userId});
+//     // })
+    
+//     // socket.on('recvMessage',() => {
         
-    // })
-})
+//     // })
+// })
 
 app.get('/', (req,res) => {
     res.send('hello');
  })
-//  http.listen(3000,() => {
-//             console.log('Server is listening at port 3000 ...');
-//         })
+ http.listen(3000,() => {
+            console.log('Server is listening at port 3000 ...');
+        })

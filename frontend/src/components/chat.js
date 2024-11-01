@@ -14,8 +14,33 @@ join.addEventListener('click', (e) => {
     }
        
     else{
+       
+            // Step 1: Validate the Room ID via an HTTP request
+            fetch('http://localhost:3000/api/rooms/join', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ roomId: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+            if (data.valid) {
+                // Step 2: If the room ID is valid, redirect to meetingRoom.html
+                window.location.href = `./meetingRoom.html?roomId=${id}`;
+            } else {
+                // Step 3: If the room ID is invalid, show an error message
+                alert('Invalid Room ID. Please try again.')
+                
+            }
+            })
+            .catch((error) => {
+            console.error('Error:', error);
+            alert('Error occurred while validating the Room ID.');
+            });
+        
          
-        window.location.href = `./chatRoom.html?roomId=${id}&userName=${userName}`;  
+        // window.location.href = `./chatRoom.html?roomId=${id}&userName=${userName}`;  
       
     }
     
