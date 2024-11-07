@@ -1,6 +1,8 @@
+import { Device } from 'mediasoup-client';
+let device;
 async function initializeDevice(){
     console.log("Initializing device");
-    device = new mediasoupClient.Device();
+    device = new Device();
     const routerRtpCapabilities = rtpCapabilities;
     await device.load({routerRtpCapabilities});
     console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);

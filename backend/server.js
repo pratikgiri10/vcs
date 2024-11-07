@@ -16,7 +16,7 @@ dotenv.config({
 const app = express();
 const http = createServer(app);
 const io = new Server(http, {
-     cors: "http://localhost:5500"
+     cors: "http://127.0.0.1:5500"
 })
 
 app.use(cors());

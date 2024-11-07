@@ -1,6 +1,8 @@
 // import io from 'socket.io';
 import { createWorker, createRoom } from './mediaSoupService.js';
-
+import { joinChatRoom } from './chatservice.js';
+let peers = {};
+let rtpCapabilities;
 async function createWebRtcTransport(router){
     try{
         const transport = await router.createWebRtcTransport(
@@ -36,9 +38,14 @@ async function createWebRtcTransport(router){
 export async function initialize(io){
     io.on('connection',async (socket) => {
         console.log(`A user connected: ${socket.id}`);
-        socket.on('room',async (roomId,callback) => {
-                
-            const router1 = await createRoom(roomId,socket.id);
+        socket.on('disconnect', () => {
+            console.log(' A User disconnected: ',socket.id);
+        })
+       
+        socket.on('room',async (data,callback) => {
+            const roomId = data.roomId;
+            joinChatRoom(data,socket);
+            const router1 = await createRoom(data.roomId,socket.id);
             peers[socket.id] = {
                 socket,
                 roomId,           // id for the Router this Peer joined
@@ -52,21 +59,11 @@ export async function initialize(io){
             }
     
             rtpCapabilities = router1.rtpCapabilities;
-            callback({rtpCapabilities});          
+            console.log('rtpCapabilities: ',rtpCapabilities);
+            // callback({rtpCapabilities});          
          
         })
             
-        
-        
-        // socket.on('getRtpCapabilities',async (_,callback) => {
-        //         try{
-        //             callback(rtpCapabilities);
-        //         }catch(err){
-        //             console.log('error sending rtpCapbilities')
-                   
-        //         }
-                
-        // });
     
         socket.on('createTransport',async({rtpCapabilities,consumer},callback) => {
             const roomId = peers[socket.id].roomId;

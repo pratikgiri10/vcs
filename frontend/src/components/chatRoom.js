@@ -1,20 +1,5 @@
 // chatRoom.js
-import { createConnection, sendMessage } from '../services/chatService.js';
-
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('roomId');
-    const username = urlParams.get('userName');
-
-    if (!roomId || !username) {
-        alert("Room ID or Username is missing");
-    }
-    else{
-        createConnection(roomId, username);
-    }
-
-    // Initialize the connection with the retrieved roomId and username
-   
+import { message, recvChat} from "../services/chatService.js";
 
     const msg = document.getElementById('msg');
     const send = document.getElementById('send');
@@ -22,13 +7,21 @@ import { createConnection, sendMessage } from '../services/chatService.js';
 
     send.addEventListener('click',(e) => {
         e.preventDefault();
-        const text = msg.value;
-        sendMessage(text);
-        console.log('text: ',text);
+        const text = msg.value.trim();
+        
+        if (!text) {
+            console.warn('Message is empty');
+            return;
+        }
+    
+        message(text);
         msg.value = "";
+        recvChat();
     });
+   
 
- export function displayMessage(msg,socketIdS,socketIdC){
+ export function displayMessage(msg){
+
     console.log(msg);
     console.log("server: ",socketIdS);
     console.log("client: ",socketIdC);

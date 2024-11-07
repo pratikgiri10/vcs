@@ -1,6 +1,10 @@
 // const { io } = require('socket.io-client');
-const socket = io('http://localhost:3000');
-const mediasoupClient = require('mediasoup-client');
+// const socket = io('http://localhost:3000');
+// import { socket, createConnection} from './socketService.js';
+import socketManager from './socketService.js';
+import { chatroom} from "./chatService.js";
+// import { Device } from 'mediasoup-client';
+
 
 const localVideo = document.getElementById('localVideo');
 // const remoteVideo = document.getElementById('remoteVideo');
@@ -15,6 +19,28 @@ let producer;
 let consumer;
 let isProducer = false;
 
+const urlParams = new URLSearchParams(window.location.search);
+const roomId = urlParams.get('roomId');
+const userName = urlParams.get('username');
+console.log('roomid: ',roomId);
+
+let socket;
+
+(async () => {
+
+       socket  = socketManager.initialize();
+        socketManager.connect();
+        socket.on('connect', () => {
+            console.log('Socket connected:', socket.id);
+            chatroom(roomId, userName, socket)
+           
+        });
+    }
+)();
+
+export const getSocket = () => socketManager.getSocket();
+
+
 start.addEventListener('click',async () => {
     // await initializeSocket();
     console.log('start button')
@@ -26,15 +52,9 @@ start.addEventListener('click',async () => {
     
 })
 
-function getQueryString(){
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('roomId');
-    console.log('roomid: ',roomId);
-   
-    return roomId;
-}
-const roomId = getQueryString();
 
+   
+ 
 function streamSuccess(stream){
     localVideo.srcObject = stream;
 }
@@ -51,21 +71,22 @@ async function mediaStream(){
    
     
 }
-socket.on('connect', () => {
-    console.log(`A client connected: ${socket.id}`);
 
-    socket.emit('room',roomId,(data) => {
+// socket.on('connect', () => {
+//     console.log(`A client connected: ${socket.id}`);
+
+//     socket.emit('room',roomId,(data) => {
       
-            console.log("new client joined the room")
-            mediaStream();
-            rtpCapabilities = data.rtpCapabilities;
+//             console.log("new client joined the room")
+//             mediaStream();
+//             rtpCapabilities = data.rtpCapabilities;
       
-    });
-})
+//     });
+// })
 
 async function initializeDevice(){
     console.log("Initializing device");
-    device = new mediasoupClient.Device();
+    device = new Device();
     const routerRtpCapabilities = rtpCapabilities;
     await device.load({routerRtpCapabilities});
     console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
@@ -223,10 +244,10 @@ async function newConsumer(remoteProducerId){
     
 }
 
-socket.on('newProducer',({producerId}) => {
-    console.log("inform about new producer: ",producerId);
-    newConsumer(producerId);
-})
+// socket.on('newProducer',({producerId}) => {
+//     console.log("inform about new producer: ",producerId);
+//     newConsumer(producerId);
+// })
 
 async function consume(remoteProducerId,consumerTransportId,recvTransport){
     console.log("consume...");

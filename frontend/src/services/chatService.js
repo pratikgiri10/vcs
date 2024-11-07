@@ -1,57 +1,42 @@
+// import socketManager from './socketService.js';
+import { getSocket } from './mediaSoupService.js';
 import { displayMessage } from '../components/chatRoom.js';
-// import { io } from 'socket.io-client';
 
-let socket = null;
-let currentUserId = null;
-
-
-function createConnection(roomId,username){
+export function chatroom(roomId,username,socket){
     
-    console.log(`room id ${roomId} and username ${username}`);
-    // this is used because server will not initiate connection automaticall as we have set 
-    // autoConnect: false
-    socket = io('http://localhost:3000',{
-        autoConnect: false
-    });
-    socket.connect();
-    socket.on('connect', () => {
-        currentUserId = socket.id;
-        console.log("A client connected: ",socket.id);
-        
-        chatroom(roomId,username);
-        // sendMessage(socketId,socket);
-        
-    })
-    socket.on('disconnect',() => {
-        console.log('disconnected from server');
-    })
-    socket.on('recvMessage', ({msg,userId}) => {
-        console.log('message: ',msg);
-        displayMessage(msg,userId,currentUserId);
-    })
-}
-
-
-function chatroom(roomId,username){
     console.log(`imported room id ${roomId} and username ${username}`);
     console.log('chatroom socket: ',socket);
-    socket.emit('joinChatRoom',{
+    socket.emit('room',{
         roomId: roomId,
         name: username
     });
 }
-function sendMessage(text){
-    console.log('socket: ',socket);
-    console.log('text: ',text);
-    socket.emit('sendMessage',{
-        
-            content:text
-        
+
+export async function message(text){
+    // const socket = window.socketService.getSocket();
+    const socket = getSocket();
+    console.log('socket: ', socket);
+    // if (!socket) {
+    //     console.warn('Socket not initialized, queuing message');
+    //     return;
+    // }
+        try {
+            console.log('Sending message:', text);
+            socket.emit('chat', {
+                content: text,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            
+        }         
+    
+   
+}
+export async function recvChat(){
+    const socket = getSocket();
+    socket.on('recvChat',(msg) => {
+        console.log('msg received: ',msg);
+        displayMessage(msg);
     })
 } 
-    
-
-export {
-    createConnection,
-    sendMessage,
-}
