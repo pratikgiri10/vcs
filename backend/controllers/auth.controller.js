@@ -6,19 +6,31 @@ export async function login(req,res){
 
     const { userName, psw: password } = req.body;
     if(userName && password){
-        const data = await User.findOne({username: userName});
-        console.log('data:',data.password);
-        const hash = data.password;
+        // const data = await User.findOne({username: userName});
+        // console.log('data:',data.password);
+        // const hash = data.password;
           // Load hash from your password DB.
-        bcrypt.compare(password, hash, function(err, result) {
-            if(result){
-                console.log('result: ',result);
-                res.send(result);
-            }
-            else{
-                console.log('error matching password: ',err);
-            }
-        });
+        // bcrypt.compare(password, hash, function(err, result) {
+        //     if(result){
+        //         console.log('result: ',result);
+                // res.send(result);       
+                req.session.user = { username: userName };
+                console.log('name: ',req.session.user);
+                console.log('cookie: ',req.session);
+                // res.redirect('./index.html');
+                // res.send({'message': 'User logged in and session data saved'});
+                req.session.save(function (err) {
+                    if (err){
+                        console.log(err);
+                        return next(err)
+                    } 
+                    res.send({valid: true});
+                  })
+            // }
+            // else{
+            //     console.log('error matching password: ',err);
+            // }
+        // });
     }
     else{
         res.send({'error': 'please fill all the fields'});
@@ -65,4 +77,17 @@ export async function register(req,res){
     
 
 
+}
+export async function checkSession(req,res){
+    if(req.session.user){
+        console.log('session found');
+        res.send({name: req.session.user.username, loggedIn: true})
+       
+    }        
+    else{
+        console.log('session not found');
+        res.send({loggedIn: false, user: req.session.user});
+       
+    }
+        
 }

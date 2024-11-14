@@ -1,8 +1,16 @@
 // import io from 'socket.io';
 import { createWorker, createRoom } from './mediaSoupService.js';
 import { joinChatRoom } from './chatservice.js';
+
 let peers = {};
+let rooms = {};
 let rtpCapabilities;
+let transport;
+let transports = [];
+let producers = [];
+let consumers = [];
+let producer;
+let consumer;
 async function createWebRtcTransport(router){
     try{
         const transport = await router.createWebRtcTransport(
@@ -11,7 +19,7 @@ async function createWebRtcTransport(router){
                 [
                   {
                     ip               : "0.0.0.0", 
-                    announcedIp      : "127.0.0.1"
+                    announcedIp      : "192.168.1.37"
                     
                   }
                 ],
@@ -26,6 +34,9 @@ async function createWebRtcTransport(router){
         transport.on('dtlstatechange',(state) => {
             console.log(`dtlsStateChange: ${state}`);
         })
+        transport.on('close', () => {
+            console.log('transport closed')
+          })
         console.log("Rooms: ",rooms);
         return transport;
     } catch(err){
@@ -37,15 +48,39 @@ async function createWebRtcTransport(router){
 
 export async function initialize(io){
     io.on('connection',async (socket) => {
+        const userId = socket.id;
+        socket.emit('connection-success',userId);
         console.log(`A user connected: ${socket.id}`);
+        const removeItems = (items,socketId, type) => {
+            console.log('remove item')
+            items.forEach(item => {
+                if (item.socketId === socketId) {
+                  item[type].close()
+                }
+              })
+              items = items.filter(item => item.socketId !== socket.id)
+          
+              return items
+        }
         socket.on('disconnect', () => {
             console.log(' A User disconnected: ',socket.id);
+            consumers = removeItems(consumers, socket.id, 'consumer');
+            producers = removeItems(producers, socket.id, 'producer');
+            transports = removeItems(transports, socket.id, 'transport');
+
+            const {roomId} = peers[socket.id];
+            delete peers[socket.id];
+
+            rooms[roomId] = {
+                router: rooms[roomId].router,
+                peers: rooms[roomId].peers.filter(socketId => socketId !== socket.id)
+            }
         })
        
         socket.on('room',async (data,callback) => {
             const roomId = data.roomId;
-            joinChatRoom(data,socket);
-            const router1 = await createRoom(data.roomId,socket.id);
+            joinChatRoom(data,socket,io,userId);
+            const router1 = await createRoom(data.roomId,socket.id,rooms);
             peers[socket.id] = {
                 socket,
                 roomId,           // id for the Router this Peer joined
@@ -59,8 +94,8 @@ export async function initialize(io){
             }
     
             rtpCapabilities = router1.rtpCapabilities;
-            console.log('rtpCapabilities: ',rtpCapabilities);
-            // callback({rtpCapabilities});          
+            // console.log('rtpCapabilities: ',rtpCapabilities);
+            callback({rtpCapabilities});          
          
         })
             
@@ -183,6 +218,11 @@ export async function initialize(io){
                 // inform about new producer
                 informConsumers(producer.id,socket.id,roomId);
                 // socket.emit('newProducer',{producerId: producer.id,socketId: socket.id});
+
+                producer.on('transportclose', () => {
+                    console.log('transport for this producer closed ');
+                    producer.close();
+                  })
     
             } catch(err){
                 console.log('error producing: ',err);
@@ -229,7 +269,20 @@ export async function initialize(io){
                     producerId: remoteProducerId,
                     paused: true
                 });
-                console.log("consumed: ",remoteProducerId);
+                console.log("consumed remote producer: ",remoteProducerId);
+
+                consumer.on('transportclose', () => {
+                    console.log('transport close from consumer')
+                  })
+                consumer.on('producerClose', () => {
+                    console.log('producer of consumer closed')
+                    socket.emit('producer-closed', { remoteProducerId })
+          
+                    consumerTransport.transport.close([])
+                    transports = transports.filter(transportData => transportData.transport.id !== consumerTransport.transport.id)
+                    consumer.close()
+                    consumers = consumers.filter(consumerData => consumerData.consumer.id !== consumer.id)
+                })
     
                 // adding consumer to peers
                 peers[socket.id] = {

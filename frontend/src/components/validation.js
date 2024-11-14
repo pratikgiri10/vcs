@@ -24,7 +24,7 @@ if (signup){
         }
         else{
             console.log('hello');
-            fetch('http://localhost:3000/api/users/register',{
+            fetch('http://127.0.0.1:3000/api/users/register',{
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userName, email, psw }),
@@ -62,7 +62,8 @@ if (signin){
             }
             else{
                 console.log('hello')
-                fetch('http://localhost:3000/api/users/login',{
+                fetch('http://127.0.0.1:3000/api/users/login',{
+                    credentials: 'include',
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json'},
                     body: JSON.stringify({userName, psw})
@@ -71,6 +72,7 @@ if (signin){
                   
                     const result = await response.json();
                     console.log('response: ',result);
+                    window.location.href = './index.html';
                 })
                 .catch((err) => {
                     console.log('error fetching login: ',err);

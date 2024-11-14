@@ -19,6 +19,11 @@ class SocketService {
     connect() {
       if (this.socket && !this.socket.connected) {
         this.socket.connect();
+        this.socket.on('connect',() => {
+          console.log('a user connected: ',this.socket.id);
+          this.socket.emit('receiver',this.socket.id);
+
+        })
       }
     }
   
@@ -38,40 +43,43 @@ class SocketService {
   }
 // Create and expose the instance
 const socketService = new SocketService();
-export default socketService;
+socketService.initialize();
+socketService.connect();
+export const getSocket = () => socketService.getSocket();
+// export default socketService;
 
 
-let currentUserId = null;
-export function createConnection(roomId,username){
+// let currentUserId = null;
+// export function createConnection(roomId,username){
     
-    console.log(`room id ${roomId} and username ${username}`);
-    // this is used because server will not initiate connection automatically as we have set 
-    // autoConnect: false
-   if(!socket.connected){
-    socket.connect();
-    // return new Promise((resolve, reject) => {
-    //     socket.on('connect', () => {
-    //         currentUserId = socket.id;
-    //         console.log("A client connected: ",socket.id);
+//     console.log(`room id ${roomId} and username ${username}`);
+//     // this is used because server will not initiate connection automatically as we have set 
+//     // autoConnect: false
+//    if(!socket.connected){
+//     socket.connect();
+//     return new Promise((resolve, reject) => {
+//         socket.on('connect', () => {
+//             currentUserId = socket.id;
+//             console.log("A client connected: ",socket.id);
             
            
-    //         // sendMessage(socketId,socket);
-    //         resolve(socket);
-    //     })
-    //     socket.on('connect_error', (err) => {
-    //         console.log("Socket connection error:", err);
-    //         reject(err); // Reject if there’s a connection error
-    //       });
-    // });
-   }
+//             // sendMessage(socketId,socket);
+//             resolve(socket);
+//         })
+//         socket.on('connect_error', (err) => {
+//             console.log("Socket connection error:", err);
+//             reject(err); // Reject if there’s a connection error
+//           });
+//     });
+//    }
     
    
-    // socket.on('disconnect',() => {
-    //     console.log('disconnected from server');
-    // })
-    // socket.on('recvMessage', ({msg,userId}) => {
-    //     console.log('message: ',msg);
-    //     displayMessage(msg,userId,currentUserId);
-    // })
+//     socket.on('disconnect',() => {
+//         console.log('disconnected from server');
+//     })
+//     socket.on('recvMessage', ({msg,userId}) => {
+//         console.log('message: ',msg);
+//         displayMessage(msg,userId,currentUserId);
+//     })
    
-}
+// }

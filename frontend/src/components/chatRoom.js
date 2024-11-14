@@ -16,23 +16,25 @@ import { message, recvChat} from "../services/chatService.js";
     
         message(text);
         msg.value = "";
-        recvChat();
+       
     });
+    
+    recvChat();
+       
    
-
- export function displayMessage(msg){
-
+   
+ export function displayMessage(msg,localUserId,remoteUserId){
     console.log(msg);
-    console.log("server: ",socketIdS);
-    console.log("client: ",socketIdC);
+    console.log("server: ",remoteUserId);
+    console.log("client: ",localUserId);
     const div = document.createElement('div');
    
-    div.setAttribute('id',`id-${socketIdC}`);
+    div.setAttribute('id',`id-${localUserId}`);
     const p = document.createElement('p');
     p.innerHTML = msg.content;
     msgContainer.appendChild(div);
     
-    if(socketIdC == socketIdS)
+    if(localUserId == remoteUserId)
     {
         p.style.backgroundColor = 'green';
         div.setAttribute('class','msgBoxRight');        

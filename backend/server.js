@@ -3,10 +3,13 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import cors from 'cors';
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import { joinChatRoom, message } from './services/chatservice.js';
 import connectDB from './config/mongooseConfig.js';
 import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js'
 import { initialize } from './services/transportService.js';
 
 dotenv.config({
@@ -16,14 +19,38 @@ dotenv.config({
 const app = express();
 const http = createServer(app);
 const io = new Server(http, {
-     cors: "http://127.0.0.1:5500"
+     cors: "http://localhost:5500",
+    //  credentials: true
 })
 
-app.use(cors());
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+    credentials: true
+}));
+// app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies
+app.use(session({
+    secret: 'collab',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+         secure: false,
+         httpOnly: false,
+        //  sameSite: 'lax',
+        //  maxAge: 1000 * 60 * 60 * 24,
+        }
+  }))
 app.use('/api/users',userRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/session',sessionRoutes);
+// function isAuthenticated (req, res, next) {
+//     if (req.session.user) next()
+//     else res.send('not authenticated.')
+//   }
+// app.get('/',isAuthenticated, (req,res) => {
+//     res.send('welcome');
+// })
 
 initialize(io);
 // connectDB()

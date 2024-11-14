@@ -43,5 +43,34 @@
         </div>
 
     </div>
+    <script>
+     
+            console.log("page is fully loaded");
+    
+            const getStarted = document.getElementById('btn3');
+            getStarted.addEventListener('click',() => {
+                fetch('http://127.0.0.1:3000/api/session/check', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
+                .then(response => response.json())
+                .then( data => {
+                    console.log('data session: ',data);
+                    if(data.loggedIn){
+                        console.log('Welcome ',data.name);
+                        window.location.href = './joinRoom.html';
+                    }
+                
+                    else{
+                        console.log('session not found');
+                        window.location.href = './login.html';
+                    }
+                
+                })
+                .catch( err => {
+                    console.log('error fetching session: ',err);
+                })
+            })
+    </script>
 </body>
 </html>

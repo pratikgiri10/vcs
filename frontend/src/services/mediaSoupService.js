@@ -1,14 +1,20 @@
 // const { io } = require('socket.io-client');
 // const socket = io('http://localhost:3000');
 // import { socket, createConnection} from './socketService.js';
-import socketManager from './socketService.js';
+// import socketManager from './socketService.js';
+import { getSocket } from "./socketService.js";
 import { chatroom} from "./chatService.js";
+import { initializeDevice } from '../dist/device.bundle.js';
+
 // import { Device } from 'mediasoup-client';
 
 
 const localVideo = document.getElementById('localVideo');
 // const remoteVideo = document.getElementById('remoteVideo');
 const start = document.getElementById('start');
+const leave = document.getElementById('leave');
+const end = document.getElementById('end');
+
 // const join = document.getElementById('join');
 
 let rtpCapabilities;
@@ -17,41 +23,56 @@ let sendTransport;
 let recvTransport;
 let producer;
 let consumer;
-let isProducer = false;
+let consumerTransports = [];
 
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('roomId');
 const userName = urlParams.get('username');
 console.log('roomid: ',roomId);
 
-let socket;
+let socket = getSocket();
 
-(async () => {
+( async () => {
 
-       socket  = socketManager.initialize();
-        socketManager.connect();
-        socket.on('connect', () => {
-            console.log('Socket connected:', socket.id);
-            chatroom(roomId, userName, socket)
+    //    socket  = socketManager.initialize();
+    //     socketManager.connect();
+    //     socket.on('connect', async () => {
+    //         console.log('Socket connected:', socket.id);
+            rtpCapabilities = await chatroom(roomId, userName);
+            console.log('routerRtpCapabilities: ',rtpCapabilities);
            
-        });
+        // });
     }
 )();
 
-export const getSocket = () => socketManager.getSocket();
+// export const getSocket = () => socketManager.getSocket();
 
 
 start.addEventListener('click',async () => {
     // await initializeSocket();
     console.log('start button')
-    await initializeDevice();
+    await loadDevice();
     setTimeout(function(){
         createSendTransport();
 
     },500);
     
 })
-
+leave.addEventListener('click', () => {
+    socket.emit('leave',{});
+})
+end.addEventListener('click',() => {
+    socket.emit('end',{});
+})
+async function loadDevice(){
+    device = await initializeDevice();
+    console.log('device: ',device);
+    console.log('rtpCapabilities: ',rtpCapabilities);
+    const routerRtpCapabilities = rtpCapabilities;
+    await device.load({routerRtpCapabilities});
+    console.log('device rtpCapabilities',device.rtpCapabilities);
+    mediaStream();
+}
 
    
  
@@ -84,21 +105,6 @@ async function mediaStream(){
 //     });
 // })
 
-async function initializeDevice(){
-    console.log("Initializing device");
-    device = new Device();
-    const routerRtpCapabilities = rtpCapabilities;
-    await device.load({routerRtpCapabilities});
-    console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
-    // socket.emit('getRtpCapabilities',{},async (rtpCapabilities) => {
-    //     console.log('getting rtpCapabilities: ',rtpCapabilities)
-    //     const routerRtpCapabilities = rtpCapabilities;
-    //     device = new mediasoupClient.Device();
-    //     await device.load({routerRtpCapabilities});
-    //     console.log('Device loaded with rtpCapabilities: ',device.rtpCapabilities);
-
-    // })
-}
 
 //get all the producers that are already in the room
 async function getProducers(){
@@ -187,7 +193,12 @@ async function produceMedia(){
     } catch(err){
         console.log("error in producing media: ",err);
     }  
-    
+    producer.on('trackended',() => {
+        console.log('A track ended.');
+    })
+    producer.on('transportClose', () => {
+        console.log('video transport ended');
+    })
 }
 let consumingTransports = [];
 async function newConsumer(remoteProducerId){
@@ -244,10 +255,10 @@ async function newConsumer(remoteProducerId){
     
 }
 
-// socket.on('newProducer',({producerId}) => {
-//     console.log("inform about new producer: ",producerId);
-//     newConsumer(producerId);
-// })
+socket.on('newProducer',({producerId}) => {
+    console.log("inform about new producer: ",producerId);
+    newConsumer(producerId);
+})
 
 async function consume(remoteProducerId,consumerTransportId,recvTransport){
     console.log("consume...");
@@ -262,7 +273,15 @@ async function consume(remoteProducerId,consumerTransportId,recvTransport){
                     kind: params.kind,
                     rtpParameters: params.rtpParameters
                 });
-
+                consumerTransports = [
+                    ...consumerTransports,
+                    {
+                        recvTransport,
+                        consumer,
+                        producerId: remoteProducerId,
+                        serverConsumerTransportId: consumerTransportId
+                    }
+                ]
                 console.log('track')
                 // Render the remote video track into a HTML video element.
                 const { track } = consumer;
@@ -284,3 +303,16 @@ async function consume(remoteProducerId,consumerTransportId,recvTransport){
         })        
     
 }
+socket.on('producer-closed', ({ remoteProducerId }) => {
+    // server notification is received when a producer is closed
+    // we need to close the client-side consumer and associated transport
+    const producerToClose = consumerTransports.find(transportData => transportData.producerId === remoteProducerId)
+    producerToClose.recvTransport.close()
+    producerToClose.consumer.close()
+  
+    // remove the consumer transport from the list
+    consumerTransports = consumerTransports.filter(transportData => transportData.producerId !== remoteProducerId)
+  
+    // remove the video div element
+    document.querySelector('.video').removeChild(document.getElementById(`td-${remoteProducerId}`));
+  })

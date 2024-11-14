@@ -32,10 +32,10 @@
         height: 500px;
     }
     video{
-        min-width: 200px;
-        max-width: 750px;
-        min-height: 200px;
-        max-height: 450px;
+        width: 200px;
+        
+        height: 200px;
+       
         background-color: #000;
         
     }
@@ -56,6 +56,7 @@
         padding: 0.5rem;
     }
     .chat-container{
+        position: relative;
         padding: 1rem;
         width: 500px;
         height: 100%;
@@ -64,6 +65,26 @@
         align-items: flex-end;
         /* justify-content: center; */
     }
+
+.msgBoxRight{
+    
+    position: absolute; 
+    right: 10px;
+    bottom: 50px;
+   
+}
+.msgBoxLeft{
+    
+    position: absolute; 
+    left: 10px;
+    bottom: 50px;
+}
+.msgContainer p{
+    margin: 0.5rem 0;
+    border: 1px solid #000;
+    border-radius: 4px;
+    padding: 0.2rem 0.7rem;
+}
 </style>
 <body>
     <div class="main">
@@ -74,6 +95,8 @@
             </div>
             <div class="button">
                 <button id="start">Start</button>
+                <button id="leave">leave</button>
+                <button id="end">End</button>
                 <button id="chat">Chats</button>
             </div>
         </div>
@@ -92,6 +115,7 @@
     </div>
     <script src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
     <!-- <script src="../src/dist/media.bundle.js" type="module"></script> -->
+     <script type="module" src="../src/services/socketService.js"></script>
     <script src="../src/services/mediaSoupService.js" type="module"></script>
     <script src="../src/components/chatRoom.js" type="module"></script>
    

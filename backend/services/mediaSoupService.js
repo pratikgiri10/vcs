@@ -1,6 +1,5 @@
 import { mediaCodecs } from "../config/mediaSoupConfig.js";
 import mediaSoup from 'mediasoup';
-let rooms = {};
 let worker;
 let router1;
 async function createWorker(){
@@ -15,7 +14,8 @@ async function createWorker(){
     
 }
 createWorker();
-async function createRoom(roomId,socketId){
+
+async function createRoom(roomId,socketId,rooms){
     // let router1;
     let peers = [];
 
@@ -38,7 +38,7 @@ async function createRoom(roomId,socketId){
     }
     rooms[roomId] = { 
         router: router1,
-        peers: []
+        peers: [...peers,socketId]
     };
 
     return router1;
@@ -46,5 +46,7 @@ async function createRoom(roomId,socketId){
 }
 export {
     createWorker,
-    createRoom
+    createRoom,
+    worker,
+    router1,
 }
