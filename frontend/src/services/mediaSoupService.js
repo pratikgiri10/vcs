@@ -21,7 +21,8 @@ let rtpCapabilities;
 let device;
 let sendTransport;
 let recvTransport;
-let producer;
+let videoProducer;
+let audioProducer;
 let consumer;
 let consumerTransports = [];
 
@@ -59,7 +60,7 @@ start.addEventListener('click',async () => {
     
 })
 leave.addEventListener('click', () => {
-    socket.emit('leave',{});
+   socket.disconnect();
 })
 end.addEventListener('click',() => {
     socket.emit('end',{});
@@ -181,22 +182,24 @@ async function createSendTransport(){
 
 async function produceMedia(){
     console.log("producing media")
-    const stream = await navigator.mediaDevices.getUserMedia({video: true});
+    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
     // localVideo.srcObject = stream;
-    const track = stream.getVideoTracks()[0];
-    console.log(track)
+    const videoTrack = stream.getVideoTracks()[0];
+    const audioTrack = stream.getAudioTracks()[0];
+    // console.log(track)
     try{
         console.log('before producing')
-        producer = await sendTransport.produce({track});
+        videoProducer = await sendTransport.produce({track: videoTrack});
+        audioProducer = await sendTransport.produce({track: audioTrack});
         console.log("produced media")
         
     } catch(err){
         console.log("error in producing media: ",err);
     }  
-    producer.on('trackended',() => {
+    videoProducer.on('trackended',() => {
         console.log('A track ended.');
     })
-    producer.on('transportClose', () => {
+    videoProducer.on('transportClose', () => {
         console.log('video transport ended');
     })
 }
@@ -289,8 +292,13 @@ async function consume(remoteProducerId,consumerTransportId,recvTransport){
                 const video  = document.createElement('video');
                 video.setAttribute('autoplay','true');
                 video.setAttribute('id',`td-${remoteProducerId}`);
-                document.querySelector('.video').appendChild(video);
+                if(params.kind == 'video'){
+                   
+                    document.querySelector('.video').appendChild(video);
+                   
+                }
                 document.getElementById(`td-${remoteProducerId}`).srcObject = new MediaStream([ track ]);
+                
                 // console.log(remoteVideo.srcObject);
                 // remoteVideo.muted = true;
                 // remoteVideo.play().catch(error => console.error("Error playing video:", error));
@@ -303,13 +311,16 @@ async function consume(remoteProducerId,consumerTransportId,recvTransport){
         })        
     
 }
-socket.on('producer-closed', ({ remoteProducerId }) => {
+socket.on('producer-closed', (remoteProducerId) => {
     // server notification is received when a producer is closed
     // we need to close the client-side consumer and associated transport
-    const producerToClose = consumerTransports.find(transportData => transportData.producerId === remoteProducerId)
+    console.log('producer-closed event: ',consumerTransports);
+    console.log('remoteProducerId: ',remoteProducerId);
+    const producerToClose = consumerTransports.find(transportData => transportData.producerId === remoteProducerId);
+    console.log('producerToClose: ',producerToClose);
     producerToClose.recvTransport.close()
     producerToClose.consumer.close()
-  
+    
     // remove the consumer transport from the list
     consumerTransports = consumerTransports.filter(transportData => transportData.producerId !== remoteProducerId)
   

@@ -12,36 +12,44 @@ let consumers = [];
 let producer;
 let consumer;
 async function createWebRtcTransport(router){
-    try{
-        const transport = await router.createWebRtcTransport(
-            {
-                listenInfos :
-                [
-                  {
-                    ip               : "0.0.0.0", 
-                    announcedIp      : "192.168.1.37"
-                    
+    return new Promise(async (resolve, reject) => {
+        try{
+            const transport = await router.createWebRtcTransport(
+                {
+                    listenInfos :
+                    [
+                      {
+                        ip               : "0.0.0.0", 
+                        announcedIp      : "192.168.1.37"
+                        
+                      }
+                    ],
+                    enableUdp    : true,
+                    enableTcp    : true,
+                    preferUdp    : true
                   }
-                ],
-                enableUdp    : true,
-                enableTcp    : true,
-                preferUdp    : true
-              }
-        )
-        transport.on('icestatechange',(state) => {
-            console.log(`IceStateChange: ${state}`);
-        })
-        transport.on('dtlstatechange',(state) => {
-            console.log(`dtlsStateChange: ${state}`);
-        })
-        transport.on('close', () => {
-            console.log('transport closed')
-          })
-        console.log("Rooms: ",rooms);
-        return transport;
-    } catch(err){
-        console.log("Cannot create transport: ",err);
-    }
+            )
+            transport.on('icestatechange',(state) => {
+                console.log(`IceStateChange: ${state}`);
+            })
+            transport.on('dtlsstatechange',(state) => {
+                console.log(`dtlsStateChange: ${state}`);
+                if (state === 'closed') {
+                    console.log('closed')
+                    transport.close()
+                  }
+            })
+            transport.on('close', () => {
+                console.log('transport closed')
+              })
+            console.log("Rooms: ",rooms);
+            resolve(transport);
+        } catch(err){
+            console.log("Cannot create transport: ",err);
+            reject(err);
+        }
+    })
+   
     
     
 }
@@ -63,7 +71,49 @@ export async function initialize(io){
               return items
         }
         socket.on('disconnect', () => {
-            console.log(' A User disconnected: ',socket.id);
+            console.log(' A User disconnected: ',socket.id);           
+            console.log('transport: ',transports)
+            // const transport = transportObj.transport;
+            const transportObj1 = transports.filter(transportData => transportData.socketId === socket.id && !transportData.consumer);
+            console.log("transportObj1: ",transportObj1);
+            let prodTransport;
+            if(!transportObj1){
+                prodTransport = transportObj1[0].transport;
+                console.log('prodtransport: ',prodTransport);
+
+                    // Close the transport
+                    prodTransport.close(); // This will trigger the 'dtlsstatechange' event
+                   // Add listener for DTLS state changes
+                    prodTransport.on('dtlsstatechange', (state) => {
+                     console.log(`DTLS state changed to: ${state}`);
+                     
+                     // Close transport if DTLS state is 'closed'
+                     if (state === 'closed') {
+                       prodTransport.close();
+                       console.log('Transport closed');
+                     }
+                   });
+            }
+           
+            const transportObj2 = transports.filter(transportData => transportData.socketId === socket.id && transportData.consumer);
+            let consTransport;
+            if(!transportObj2){
+                console.log('transportObj2: ',transportObj2);
+                consTransport = transportObj2[0].transport;
+                 // Close the transport
+                 consTransport.close(); // This will trigger the 'dtlsstatechange' event
+                 // Add listener for DTLS state changes
+                  consTransport.on('dtlsstatechange', (state) => {
+                   console.log(`DTLS state changed to: ${state}`);
+                   
+                   // Close transport if DTLS state is 'closed'
+                   if (state === 'closed') {
+                     consTransport.close();
+                     console.log('Transport closed');
+                   }
+                 });
+            }
+         
             consumers = removeItems(consumers, socket.id, 'consumer');
             producers = removeItems(producers, socket.id, 'producer');
             transports = removeItems(transports, socket.id, 'transport');
@@ -191,6 +241,7 @@ export async function initialize(io){
             const roomId = peers[socket.id].roomId;
             try{
                 // using the filtered producer transport that matches the socketid to produce that producer media
+                console.log('producer kind: ',kind);
                 producer = await producerTransport.transport.produce({kind, rtpParameters});
                 console.log("produce event: ",producer.id);
     
@@ -221,7 +272,14 @@ export async function initialize(io){
 
                 producer.on('transportclose', () => {
                     console.log('transport for this producer closed ');
-                    producer.close();
+                    try{
+                        producer.close();
+                        console.log('producer closed:');
+
+                    }catch(e){
+                        console.log('error closing transport: ',e)
+                    }
+                    
                   })
     
             } catch(err){
@@ -261,7 +319,7 @@ export async function initialize(io){
         socket.on('consume',async({rtpCapabilities,remoteProducerId,consumerTransportId},callback) => {
             const roomId = peers[socket.id].roomId;
             const [consumerTransport] = transports.filter(transportData => transportData.transport.id === consumerTransportId && transportData.consumer)
-            // console.log('consumerTransport: ',consumerTransport);
+            console.log('consumerTransport: ',consumerTransport);
             console.log("remote producer id: ",remoteProducerId)
             try{
                 consumer = await consumerTransport.transport.consume({
@@ -272,13 +330,15 @@ export async function initialize(io){
                 console.log("consumed remote producer: ",remoteProducerId);
 
                 consumer.on('transportclose', () => {
-                    console.log('transport close from consumer')
+                    console.log('transport close from consumer');
+
+                    
                   })
-                consumer.on('producerClose', () => {
+                consumer.on('producerclose', () => {
                     console.log('producer of consumer closed')
-                    socket.emit('producer-closed', { remoteProducerId })
+                    socket.emit('producer-closed',remoteProducerId);
           
-                    consumerTransport.transport.close([])
+                    consumerTransport.transport.close([]);
                     transports = transports.filter(transportData => transportData.transport.id !== consumerTransport.transport.id)
                     consumer.close()
                     consumers = consumers.filter(consumerData => consumerData.consumer.id !== consumer.id)
@@ -301,7 +361,7 @@ export async function initialize(io){
                 console.log("consumers: ",consumers);
                 console.log("consumers id: ",consumer.id);
                 // console.log('remoteproducerId: ',remoteProducerId);
-    
+                console.log('consumer kind: ',consumer.kind);
                 callback({
                     id: consumer.id,
                     producerId: remoteProducerId,
