@@ -9,7 +9,8 @@ import { joinChatRoom, message } from './services/chatservice.js';
 import connectDB from './config/mongooseConfig.js';
 import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
-import sessionRoutes from './routes/sessionRoutes.js'
+import sessionRoutes from './routes/sessionRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
 import { initialize } from './services/transportService.js';
 
 dotenv.config({
@@ -44,6 +45,7 @@ app.use(session({
 app.use('/api/users',userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/session',sessionRoutes);
+app.use('/api/meeting', scheduleRoutes);
 // function isAuthenticated (req, res, next) {
 //     if (req.session.user) next()
 //     else res.send('not authenticated.')
@@ -53,15 +55,15 @@ app.use('/api/session',sessionRoutes);
 // })
 
 initialize(io);
-// connectDB()
-// .then(() => {    
-//     http.listen(3000,() => {
-//         console.log('Server is listening at port 3000 ...');
-//     })
-// })
-// .catch((err) => {
-//     console.log('Error loading server: ',err);
-// })
+connectDB()
+.then(() => {    
+    http.listen(3000,() => {
+        console.log('Server is listening at port 3000 ...');
+    })
+})
+.catch((err) => {
+    console.log('Error loading server: ',err);
+})
 
 
 // ( async () => {
@@ -108,6 +110,6 @@ initialize(io);
 app.get('/', (req,res) => {
     res.send('hello');
  })
- http.listen(3000,() => {
-            console.log('Server is listening at port 3000 ...');
-        })
+//  http.listen(3000,() => {
+//             console.log('Server is listening at port 3000 ...');
+//         })

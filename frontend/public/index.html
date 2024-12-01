@@ -35,6 +35,7 @@
                 </div>
                 <div class="btns">
                     <button id="btn3">Get Started</button>
+                    <button id="btn4">Schedule</button>
                 </div>
             </div>
             <div class="image">
@@ -46,17 +47,27 @@
     <script>
      
             console.log("page is fully loaded");
-    
-            const getStarted = document.getElementById('btn3');
-            getStarted.addEventListener('click',() => {
-                fetch('http://127.0.0.1:3000/api/session/check', {
+            function sessionValidation(){
+                return fetch('http://127.0.0.1:3000/api/session/check', {
                     method: 'GET',
                     credentials: 'include',
                 })
                 .then(response => response.json())
                 .then( data => {
                     console.log('data session: ',data);
-                    if(data.loggedIn){
+                   return data;
+                
+                })
+                .catch( err => {
+                    console.log('error fetching session: ',err);
+                })
+            }
+    
+            const getStarted = document.getElementById('btn3');
+            const schedule = document.getElementById('btn4');
+            getStarted.addEventListener('click',async () => {
+                const data = await sessionValidation();
+                if(data.loggedIn){
                         console.log('Welcome ',data.name);
                         window.location.href = './joinRoom.html';
                     }
@@ -65,11 +76,19 @@
                         console.log('session not found');
                         window.location.href = './login.html';
                     }
+            })
+
+            schedule.addEventListener('click', async () => {
+                 const data = await sessionValidation();
+                if(data.loggedIn){
+                        console.log('Welcome ',data.name);
+                        window.location.href = './schedule.html';
+                    }
                 
-                })
-                .catch( err => {
-                    console.log('error fetching session: ',err);
-                })
+                    else{
+                        console.log('session not found');
+                        window.location.href = './login.html';
+                    }
             })
     </script>
 </body>

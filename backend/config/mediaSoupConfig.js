@@ -15,7 +15,15 @@ export const mediaCodecs = [
           "profile-level-id"        : "42e01f",
           "level-asymmetry-allowed" : 1
         }
+      },
+      {
+        kind: 'video',
+        mimeType: 'video/VP8',
+        clockRate: 90000,
+        parameters: {
+          'x-google-start-bitrate': 1000
       }
+    }    
 ]
 
 export const transportCodecs = [

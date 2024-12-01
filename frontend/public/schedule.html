@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Meeting</title>
+</head>
+<style>
+    .main{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+   
+</style>
+<body>
+    <div class="main">
+        <form action="#">
+            Title: 
+            <input type="text" id="title">
+            Description: 
+            <input type="text" id="desc">
+            Start Time:
+            <input type="datetime-local" id="startTime"><br>
+            Duration:
+            <input type="number" id="duration"><br>
+            <button type="submit" id="schedule">Schedule</button>
+        </form>
+    </div>
+    <div id="scheduleDetails"></div>
+    <script>
+        const schedule = document.getElementById('schedule');
+        const scheduleDetails = document.getElementById('scheduleDetails');
+        schedule.addEventListener('click',(e) => {
+            const when = document.getElementById('startTime').value;
+            const duration = document.getElementById('duration').value;
+            e.preventDefault();
+            fetch('http://127.0.0.1:3000/api/meeting/schedule',{
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify({when,duration})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('meeting is scheduled for ',data.startTime);
+                meetingDetails();
+            })
+            .catch(err => {
+                console.log('error scheduling meeting');
+            })
+        })
+        function meetingDetails(){
+            fetch('http://127.0.0.1:3000/api/meeting/schedule',{
+                method: 'GET',
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('meeting data ',data);
+                display(data);
+            })
+            .catch(err => {
+                console.log('error scheduling meeting');
+            })
+        }
+        async function display(details){
+            console.log('details: ',details);
+            details.forEach(detail => {
+                scheduleDetails.innerHTML= '';
+                const div = document.createElement('div');
+                div.className = 'details';
+                div.innerHTML =`
+                    <h3>Title: ${detail.title}</h3>
+                    <p>Description: ${detail.desc}</p>
+                    <p>Start Time: ${detail.startTime}</p>
+                    <p>Date: ${detail.date}</p>
+                    <p>Meeting Id: ${detail.meetingId}</p>
+                    <p>Password: ${detail.password}</p>                    
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

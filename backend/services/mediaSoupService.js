@@ -5,7 +5,8 @@ let router1;
 async function createWorker(){
     worker = await mediaSoup.createWorker({
         rtcMinPort: 10000,
-        rtcMaxPort: 10020
+        rtcMaxPort: 10100,
+        logLevel: 'warn',
     });
     console.log(`WorkerPid: ${worker.pid}`);
 

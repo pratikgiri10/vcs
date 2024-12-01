@@ -10,10 +10,12 @@ import { initializeDevice } from '../dist/device.bundle.js';
 
 
 const localVideo = document.getElementById('localVideo');
+const videoElem = document.querySelector('.video');
 // const remoteVideo = document.getElementById('remoteVideo');
 const start = document.getElementById('start');
 const leave = document.getElementById('leave');
 const end = document.getElementById('end');
+const screenShare = document.getElementById('screen');
 
 // const join = document.getElementById('join');
 
@@ -23,6 +25,7 @@ let sendTransport;
 let recvTransport;
 let videoProducer;
 let audioProducer;
+let screenProducer;
 let consumer;
 let consumerTransports = [];
 
@@ -65,6 +68,21 @@ leave.addEventListener('click', () => {
 end.addEventListener('click',() => {
     socket.emit('end',{});
 })
+const displayMediaOptions = {
+    video: {
+      displaySurface: "window",
+    },
+    audio: {
+      suppressLocalAudioPlayback: false,
+    },
+    preferCurrentTab: false,
+    selfBrowserSurface: "exclude",
+    systemAudio: "include",
+    surfaceSwitching: "include",
+    monitorTypeSurfaces: "include",
+  };
+let screenCapture;
+
 async function loadDevice(){
     device = await initializeDevice();
     console.log('device: ',device);
@@ -182,15 +200,47 @@ async function createSendTransport(){
 
 async function produceMedia(){
     console.log("producing media")
-    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100,
+        suppressLocalAudioPlayback: true,
+    }});
+    screenShare.addEventListener('click' ,async () => {
+        console.log('share screen')
+        screenCapture = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+        console.log('screen capture: ',screenCapture);
+        let screenTrack;
+    if(screenCapture){
+        console.log('producing screen capture')
+        screenTrack = screenCapture.getVideoTracks()[0];
+        try{
+            screenProducer = await sendTransport.produce({
+                track: screenTrack,
+               
+            });
+        }catch(err){
+            console.log("screen capture failed: ",err);
+        }
+        
+        console.log('screen shared');
+    }
+    })
     // localVideo.srcObject = stream;
     const videoTrack = stream.getVideoTracks()[0];
     const audioTrack = stream.getAudioTracks()[0];
+    
+   
     // console.log(track)
     try{
         console.log('before producing')
-        videoProducer = await sendTransport.produce({track: videoTrack});
+        videoProducer = await sendTransport.produce({
+            track: videoTrack,
+           
+
+        });
         audioProducer = await sendTransport.produce({track: audioTrack});
+        
         console.log("produced media")
         
     } catch(err){
@@ -292,12 +342,24 @@ async function consume(remoteProducerId,consumerTransportId,recvTransport){
                 const video  = document.createElement('video');
                 video.setAttribute('autoplay','true');
                 video.setAttribute('id',`td-${remoteProducerId}`);
+                // video.setAttribute('id',`sc-${remoteProducerId}`);
+                const audio  = document.createElement('audio');
+                audio.setAttribute('autoplay','true');
+                audio.setAttribute('id',`td-${remoteProducerId}`);
                 if(params.kind == 'video'){
                    
                     document.querySelector('.video').appendChild(video);
                    
                 }
+                else{
+                    document.querySelector('.video').appendChild(audio);
+                   
+                }
                 document.getElementById(`td-${remoteProducerId}`).srcObject = new MediaStream([ track ]);
+                if(screenCapture){
+                    console.log('screen captured');
+                    document.getElementById(`td-${remoteProducerId}`).srcObject = screenCapture;
+                }
                 
                 // console.log(remoteVideo.srcObject);
                 // remoteVideo.muted = true;

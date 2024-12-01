@@ -56,6 +56,13 @@ button{
     font-size: 1.2rem;
     padding: 0.85rem 1.2rem;
 }
+#btn4{
+    background-color: #044c69;
+    color: white;
+    font-weight: 500;
+    font-size: 1.2rem;
+    padding: 0.85rem 1.2rem;   
+}
 .image{
     margin-top: 1rem;
 }
