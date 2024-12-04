@@ -1,0 +1,37 @@
+{
+    "roles":[
+        {
+            "name" : "admin",
+            "permissions": [
+                "manage_users"
+            ]
+        },
+        {
+            "name" : "user",
+            "permissions" : [
+                "create_meeting",
+                "join_meeting",
+                "meeting_details_of_user"
+            ]
+        },
+        {
+            "name" : "host",
+            "permissions" : [
+                "start_meeting",
+                "join_meeting",
+                "send_message",
+                "leave_meeting",
+                "end_meeting",
+                "details_of_participants or attendance"
+            ]
+        },
+        {
+            "name" : "participants",
+            "permissions" : [
+                "join_meeting",
+                "leave_meeting",
+                "send_message"
+            ]
+        }
+    ]
+}

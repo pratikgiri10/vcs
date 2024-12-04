@@ -3,18 +3,17 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js'
 const saltRounds = 10;
 export async function login(req,res){
-
     const { userName, psw: password } = req.body;
     if(userName && password){
-        // const data = await User.findOne({username: userName});
-        // console.log('data:',data.password);
-        // const hash = data.password;
-          // Load hash from your password DB.
-        // bcrypt.compare(password, hash, function(err, result) {
-        //     if(result){
-        //         console.log('result: ',result);
+        const data = await User.findOne({username: userName});
+        console.log('data:',data.password);
+        const hash = data.password;
+        //   Load hash from your password DB.
+        bcrypt.compare(password, hash, function(err, result) {
+            if(result){
+                console.log('result: ',result);
                 // res.send(result);       
-                req.session.user = { username: userName };
+                req.session.user = { username: userName, role: data.role };
                 console.log('name: ',req.session.user);
                 console.log('cookie: ',req.session);
                 // res.redirect('./index.html');
@@ -26,11 +25,11 @@ export async function login(req,res){
                     } 
                     res.send({valid: true});
                   })
-            // }
-            // else{
-            //     console.log('error matching password: ',err);
-            // }
-        // });
+            }
+            else{
+                console.log('error matching password: ',err);
+            }
+        });
     }
     else{
         res.send({'error': 'please fill all the fields'});
@@ -42,11 +41,15 @@ export async function login(req,res){
 
 export async function register(req,res){
     const { userName, email, psw: password } = req.body;
-    
+    const adminEmail = 'pratikgiri2320@gmail.com';
+    let role = 'user';
     if(userName && email && password){
         
         const name = await User.findOne({username: userName});
         if(!name){
+            if(adminEmail == email){
+                role = 'admin';
+            }
             console.log('name: ',name);
             // jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' }, function(err, token) {
             //     console.log(token);
@@ -58,11 +61,13 @@ export async function register(req,res){
                     const user = new User({
                         username: userName,
                         email: email,
-                        password: hash
+                        password: hash,
+                        role: role
                     });
                     await user.save();
                 });
             });
+            res.status(200).json({msg: 'success'});
            
         }
         else{

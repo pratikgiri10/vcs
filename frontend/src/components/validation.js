@@ -1,5 +1,6 @@
 const signup = document.getElementById('signup');
 const signin = document.getElementById('signin');
+const form =  document.querySelector('.formSubmit');
 if (signup){
     signup.addEventListener('click',async (e) => {
         console.log('click');
@@ -33,6 +34,12 @@ if (signup){
                
                 const result = await response.json();
                 console.log('result: ',result);
+                if(result.OK){
+                    window.location.href = './login.html';
+                }
+                else{
+                    form.reset();
+                }
             })
             .catch((err) => {
                 console.log("error fetching register: ",err)
@@ -72,7 +79,9 @@ if (signin){
                   
                     const result = await response.json();
                     console.log('response: ',result);
-                    window.location.href = './index.html';
+                  
+                        window.location.href = './index.html';
+                  
                 })
                 .catch((err) => {
                     console.log('error fetching login: ',err);

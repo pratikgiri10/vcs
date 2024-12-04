@@ -1,6 +1,9 @@
 // import io from 'socket.io';
 import { createWorker, createRoom } from './mediaSoupService.js';
 import { joinChatRoom } from './chatservice.js';
+import { Schedule } from './models/schedule.model.js';
+
+
 
 let peers = {};
 let rooms = {};
@@ -128,6 +131,7 @@ export async function initialize(io){
         })
        
         socket.on('room',async (data,callback) => {
+          
             const roomId = data.roomId;
             joinChatRoom(data,socket,io,userId);
             const router1 = await createRoom(data.roomId,socket.id,rooms);

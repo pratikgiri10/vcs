@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meetings</title>
+</head>
+<style>
+    .table{
+        /* display: flex; */
+        /* justify-content: space-evenly; */
+        /* align-items: center;
+        gap: 10px;
+        width: 100%;*/
+    } 
+     table {
+            border-collapse: collapse;
+            /* margin-bottom: 20px; */
+            /* width: 100; */
+        }
+    
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+        .actionBtn{
+            margin: 0 10px;
+            border: none;
+            background-color: #4CAF50;
+            padding: 0.5rem 0.8rem;
+            font-size: 1.1rem;
+        }
+</style>
+<body>
+    <div class="table">
+        <table id="myTable"> 
+            <thead> 
+                <tr> 
+                    <th>Date</th> 
+                    <th>Title</th> 
+                    <th>Meeting Id</th>
+                    <th>Password</th>
+                    <th>Action</th>
+                </tr> 
+            </thead> 
+            <tbody> 
+                <!-- Rows will be added here --> 
+            </tbody> 
+        </table> 
+        <!-- <button id="start">Start</button> -->
+    </div>
+    <script>
+        window.addEventListener('load', () => {
+           
+           
+            let id;
+            fetch('http://127.0.0.1:3000/api/meeting/details',{
+                method: 'GET',
+                credentials: 'include',
+            })
+            .then(response => response.json())
+            .then(data => {
+                // console.log('meeting data ',data);
+             
+
+
+
+
+
+                data.forEach(element => {
+                    id = element.meetingId;
+                    console.log('id: ',id);
+                    const tableBody = document.getElementById('myTable').getElementsByTagName('tbody')[0]; 
+                    // Create a new row 
+                    const newRow = tableBody.insertRow(); 
+                    
+                    // Insert new cells (columns) into the row 
+                    const cell1 = newRow.insertCell(0); 
+                    const cell2 = newRow.insertCell(1); 
+                    const cell3 = newRow.insertCell(2); 
+                    const cell4 = newRow.insertCell(3); 
+                    const cell5 = newRow.insertCell(4); 
+                    const date = new Date(element.startTime).toUTCString();
+                    cell1.textContent= date;
+                    cell2.textContent= element.title;
+                    cell3.textContent = element.meetingId;
+                    cell4.textContent = element.password;
+                    cell5.innerHTML = `<button id="start-${element._id}" class = "actionBtn">Start</button>` + `<button id="edit" class = "actionBtn">Edit</button>` + `<button id="delete" class = "actionBtn">Delete</button>`;
+                });
+                const start = document.querySelectorAll('.actionBtn');
+                
+                start.forEach(e => {
+                    e.addEventListener('click',(event) => {
+                        const id = event.target.parentNode.parentNode.cells[2].innerHTML;
+                        console.log('meeting id: ',id);
+                        console.log('meeting started');
+                       
+                        // const tableBody = document.getElementById('myTable').getElementsByTagName('tbody')[0]; 
+                        
+                        // const response = await  fetch('http://127.0.0.1:3000/api/meeting/details',{
+                        //                         method: 'GET',
+                        //                         credentials: 'include',
+                        //                     });
+                        // const meeting_id = response.json();
+                        window.location.href = `./meetingRoom.html?roomId=${id}`;
+                    })
+             
+                })
+              
+            })
+            .catch(err => {
+                console.log('error scheduling meeting');
+            })
+        })
+    </script>
+</body>
+</html>

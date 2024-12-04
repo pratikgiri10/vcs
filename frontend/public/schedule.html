@@ -8,11 +8,16 @@
 <style>
     .main{
         display: flex;
+        
         justify-content: center;
         align-items: center;
-        text-align: center;
+        /* text-align: center; */
     }
-   
+   form{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+   }
 </style>
 <body>
     <div class="main">
@@ -35,12 +40,14 @@
         schedule.addEventListener('click',(e) => {
             const when = document.getElementById('startTime').value;
             const duration = document.getElementById('duration').value;
+            const title = document.getElementById('title').value;
+            const desc = document.getElementById('desc').value;
             e.preventDefault();
             fetch('http://127.0.0.1:3000/api/meeting/schedule',{
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json'},
-                body: JSON.stringify({when,duration})
+                body: JSON.stringify({title,desc,when,duration})
             })
             .then(response => response.json())
             .then(data => {
@@ -52,7 +59,7 @@
             })
         })
         function meetingDetails(){
-            fetch('http://127.0.0.1:3000/api/meeting/schedule',{
+            fetch('http://127.0.0.1:3000/api/meeting/details',{
                 method: 'GET',
                 credentials: 'include',
             })
@@ -73,12 +80,13 @@
                 div.className = 'details';
                 div.innerHTML =`
                     <h3>Title: ${detail.title}</h3>
-                    <p>Description: ${detail.desc}</p>
+                    <p>Description: ${detail.description}</p>
                     <p>Start Time: ${detail.startTime}</p>
-                    <p>Date: ${detail.date}</p>
+                    <p>Duration: ${detail.duration}</p>
                     <p>Meeting Id: ${detail.meetingId}</p>
                     <p>Password: ${detail.password}</p>                    
                 `;
+                scheduleDetails.appendChild(div)
             });
         }
     </script>

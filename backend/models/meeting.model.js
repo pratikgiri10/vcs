@@ -16,6 +16,10 @@ const meetingSchema = new mongoose.Schema({
             ref: 'User' 
         }
     ],
+    role: {
+        type: String,
+        enum: ['admin','host','participants']
+    }
     
   }, { timestamps: true });
   
